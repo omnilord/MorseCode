@@ -1,98 +1,61 @@
 package com.privateerconsulting.vibrotest;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by etruitte on 11/6/16.
- */
 public final class MorseCodes {
 
-    public static final Map<Character, long[]> CODES;
+    public static final Map<Character, MorseCharacter> CODES;
 
     public static final long
             DOT = 100,
             DASH = 300,
-            SEP = 100,
-            CHAR = 300,
-            WORD = 500,
-            STOP = 1000;
+            SEP = 101,
+            CHAR = 301,
+            WORD = 701,
+            STOP = 1001;
 
     static {
-        Map<Character, long[]> map = new HashMap<>();
-        map.put('A', new long[] {DOT, SEP, DASH});
-        map.put('B', new long[] {DASH, SEP, DOT, SEP, DOT, SEP, DOT});
-        map.put('C', new long[] {DASH, SEP, DOT, SEP, DASH, SEP, DOT});
-        map.put('D', new long[] {DASH, SEP, DOT});
-        map.put('E', new long[] {DOT});
-        map.put('F', new long[] {DOT, SEP, DOT, SEP, DASH, SEP, DOT});
-        map.put('G', new long[] {DASH, SEP, DASH, SEP, DOT});
-        map.put('H', new long[] {DOT, SEP, DOT, SEP, DOT, SEP, DOT});
-        map.put('I', new long[] {DOT, SEP, DOT});
-        map.put('J', new long[] {DOT, SEP, DASH, SEP, DASH, SEP, DASH});
-        map.put('K', new long[] {DASH, SEP, DOT, SEP, DASH});
-        map.put('L', new long[] {DOT, SEP, DASH, DOT, DOT});
-        map.put('M', new long[] {DASH, SEP, DASH});
-        map.put('N', new long[] {DASH, SEP, DOT});
-        map.put('O', new long[] {DASH, SEP, DASH, SEP, DASH});
-        map.put('P', new long[] {DOT, SEP, DASH, SEP, DASH, SEP, DOT});
-        map.put('Q', new long[] {DASH, SEP, DASH, SEP, DOT, SEP, DASH});
-        map.put('R', new long[] {DOT, SEP, DASH, SEP, DOT});
-        map.put('S', new long[] {DOT, SEP, DOT, SEP, DOT});
-        map.put('T', new long[] {DASH});
-        map.put('U', new long[] {DOT, SEP, DOT, SEP, DASH});
-        map.put('V', new long[] {DOT, SEP, DOT, SEP, DOT, SEP, DASH});
-        map.put('W', new long[] {DOT, SEP, DASH, SEP, DASH});
-        map.put('X', new long[] {DASH, SEP, DOT, SEP, DOT, SEP, DASH});
-        map.put('Y', new long[] {DASH, SEP, DOT, SEP, DASH, SEP, DASH});
-        map.put('Z', new long[] {DASH, SEP, DASH, SEP, DOT, SEP, DOT});
-        map.put('0', new long[] {DASH, SEP, DASH, SEP, DASH, SEP, DASH, SEP, DASH});
-        map.put('1', new long[] {DOT, SEP, DASH, SEP, DASH, SEP, DASH, SEP, DASH});
-        map.put('2', new long[] {DOT, SEP, DOT, SEP, DASH, SEP, DASH, SEP, DASH});
-        map.put('3', new long[] {DOT, SEP, DOT, SEP, DOT, SEP, DASH, SEP, DASH});
-        map.put('4', new long[] {DOT, SEP, DOT, SEP, DOT, SEP, DOT, SEP, DASH});
-        map.put('5', new long[] {DOT, SEP, DOT, SEP, DOT, SEP, DOT, SEP, DOT});
-        map.put('6', new long[] {DASH, SEP, DOT, SEP, DOT, SEP, DOT, SEP, DOT});
-        map.put('7', new long[] {DASH, SEP, DASH, SEP, DOT, SEP, DOT, SEP, DOT});
-        map.put('8', new long[] {DASH, SEP, DASH, SEP, DASH, SEP, DOT, SEP, DOT});
-        map.put('9', new long[] {DASH, SEP, DASH, SEP, DASH, SEP, DASH, SEP, DOT});
-        //map.put(',', new long[] {WORD});
-        //map.put(' ', new long[] {WORD});
-        //map.put(';', new long[] {WORD});
-        //map.put('.', new long[] {STOP});
+        Map<Character, MorseCharacter> map = new HashMap<>();
+
+        map.put('A', new MorseCharacter('A', new long[] {DOT, DASH}));
+        map.put('B', new MorseCharacter('B', new long[] {DASH, DOT, DOT, DOT}));
+        map.put('C', new MorseCharacter('C', new long[] {DASH, DOT, DASH, DOT}));
+        map.put('D', new MorseCharacter('D', new long[] {DASH, DOT}));
+        map.put('E', new MorseCharacter('E', new long[] {DOT}));
+        map.put('F', new MorseCharacter('F', new long[] {DOT, DOT, DASH, DOT}));
+        map.put('G', new MorseCharacter('G', new long[] {DASH, DASH, DOT}));
+        map.put('H', new MorseCharacter('H', new long[] {DOT, DOT, DOT, DOT}));
+        map.put('I', new MorseCharacter('I', new long[] {DOT, DOT}));
+        map.put('J', new MorseCharacter('J', new long[] {DOT, DASH, DASH, DASH}));
+        map.put('K', new MorseCharacter('K', new long[] {DASH, DOT, DASH}));
+        map.put('L', new MorseCharacter('L', new long[] {DOT, DASH, DOT, DOT}));
+        map.put('M', new MorseCharacter('M', new long[] {DASH, DASH}));
+        map.put('N', new MorseCharacter('N', new long[] {DASH, DOT}));
+        map.put('O', new MorseCharacter('O', new long[] {DASH, DASH, DASH}));
+        map.put('P', new MorseCharacter('P', new long[] {DOT, DASH, DASH, DOT}));
+        map.put('Q', new MorseCharacter('Q', new long[] {DASH, DASH, DOT, DASH}));
+        map.put('R', new MorseCharacter('R', new long[] {DOT, DASH, DOT}));
+        map.put('S', new MorseCharacter('S', new long[] {DOT, DOT, DOT}));
+        map.put('T', new MorseCharacter('T', new long[] {DASH}));
+        map.put('U', new MorseCharacter('U', new long[] {DOT, DOT, DASH}));
+        map.put('V', new MorseCharacter('V', new long[] {DOT, DOT, DOT, DASH}));
+        map.put('W', new MorseCharacter('W', new long[] {DOT, DASH, DASH}));
+        map.put('X', new MorseCharacter('X', new long[] {DASH, DOT, DOT, DASH}));
+        map.put('Y', new MorseCharacter('Y', new long[] {DASH, DOT, DASH, DASH}));
+        map.put('Z', new MorseCharacter('Z', new long[] {DASH, DASH, DOT, DOT}));
+        map.put('0', new MorseCharacter('0', new long[] {DASH, DASH, DASH, DASH, DASH}));
+        map.put('1', new MorseCharacter('1', new long[] {DOT, DASH, DASH, DASH, DASH}));
+        map.put('2', new MorseCharacter('2', new long[] {DOT, DOT, DASH, DASH, DASH}));
+        map.put('3', new MorseCharacter('3', new long[] {DOT, DOT, DOT, DASH, DASH}));
+        map.put('4', new MorseCharacter('4', new long[] {DOT, DOT, DOT, DOT, DASH}));
+        map.put('5', new MorseCharacter('5', new long[] {DOT, DOT, DOT, DOT, DOT}));
+        map.put('6', new MorseCharacter('6', new long[] {DASH, DOT, DOT, DOT, DOT}));
+        map.put('7', new MorseCharacter('7', new long[] {DASH, DASH, DOT, DOT, DOT}));
+        map.put('8', new MorseCharacter('8', new long[] {DASH, DASH, DASH, DOT, DOT}));
+        map.put('9', new MorseCharacter('9', new long[] {DASH, DASH, DASH, DASH, DOT}));
 
         CODES = Collections.unmodifiableMap(map);
-    }
-
-    public static final long[] encode(CharSequence chs) {
-        ArrayList<Long> _pat = new ArrayList<>();
-        _pat.add(0L);
-
-        for (int i = 0; i < chs.length(); i++) {
-            char ch = Character.toUpperCase(chs.charAt(i));
-            if (MorseCodes.CODES.containsKey(ch)) {
-                long[] codes = MorseCodes.CODES.get(ch);
-                for (int j = 0; j < codes.length; j++) {
-                    //_pat.add(SEP);
-                    _pat.add(codes[j]);
-                }
-                _pat.add(CHAR);
-            } else if (ch == '.') {
-                _pat.add(0L);
-                _pat.add(STOP);
-            } else {
-                _pat.add(0L);
-                _pat.add(WORD);
-            }
-        }
-
-        long[] pat = new long[_pat.size()];
-        for (int i = 0; i < pat.length; i++) {
-            pat[i] = _pat.get(i);
-        }
-
-        return pat;
     }
 }
