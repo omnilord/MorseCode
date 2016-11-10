@@ -9,15 +9,19 @@ public final class MorseCodes {
     public static final Map<Character, MorseCharacter> CODES;
 
     public static final long
-            DOT = 100,
-            DASH = 300,
-            SEP = 101,
-            CHAR = 301,
-            WORD = 701,
-            STOP = 1001;
+            DOT = 300,
+            DASH = DOT * 3,
+            SEP = DOT / 2,
+            CHAR = SEP * 3,
+            WORD = SEP * 7,
+            STOP = WORD + CHAR;
 
     static {
         Map<Character, MorseCharacter> map = new HashMap<>();
+
+        /*
+          Use ONLY DOT and DASH to define characters, SEP will be injected later
+        */
 
         map.put('A', new MorseCharacter('A', new long[] {DOT, DASH}));
         map.put('B', new MorseCharacter('B', new long[] {DASH, DOT, DOT, DOT}));

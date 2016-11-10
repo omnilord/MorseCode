@@ -1,7 +1,12 @@
 package com.privateerconsulting.vibrotest;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.content.Context;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -13,9 +18,14 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    final long OVERHEAD_ESTIMATE = 20L;
+
     Button btnStart;
     TextView edit, disp;
     Vibrator v;
+    CameraManager cm;
+    String cam;
+
 
     class MorseCodeTask extends AsyncTask<MorseCharacter, MorseCharacter, Void> {
 
@@ -25,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
                 publishProgress(ch);
                 if (isCancelled()) { break; }
                 try {
-                    Thread.sleep(ch.duration);
+                    Thread.sleep(ch.duration + OVERHEAD_ESTIMATE);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -33,16 +43,39 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
 
+        @TargetApi(Build.VERSION_CODES.M)
         @Override
         protected void onProgressUpdate(MorseCharacter... values) {
+            boolean live = false;
             MorseCharacter ch = values[0];
-            disp.setText(ch.series);
-            if (v.hasVibrator()) {
-                v.vibrate(ch.intervals, -1);
+            disp.setText(disp.getText() + "  " + ch.series);
+
+            for (long dit : ch.intervals) {
+                if (live) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            cm.setTorchMode(cam, true);
+                            if (v.hasVibrator()) {
+                                v.vibrate(dit);
+                            }
+                            cm.setTorchMode(cam, false);
+                        } catch (CameraAccessException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                try {
+                    Thread.sleep(dit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                live = !live;
             }
         }
     }
 
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +85,14 @@ public class MainActivity extends AppCompatActivity {
         edit = (TextView) findViewById(R.id.editText);
         disp = (TextView) findViewById(R.id.textView);
         v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        cm = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            try {
+                cam = cm.getCameraIdList()[0];
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        }
 
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
