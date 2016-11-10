@@ -9,7 +9,7 @@ public final class MorseCodes {
     public static final Map<Character, MorseCharacter> CODES;
 
     public static final long
-            DOT = 300,
+            DOT = 200,
             DASH = DOT * 3,
             SEP = DOT / 2,
             CHAR = SEP * 3,

@@ -1,6 +1,5 @@
 package com.privateerconsulting.vibrotest;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.hardware.camera2.CameraAccessException;
@@ -18,26 +17,47 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    final long OVERHEAD_ESTIMATE = 20L;
-
     Button btnStart;
     TextView edit, disp;
     Vibrator v;
     CameraManager cm;
     String cam;
+    MorseCodeTask runningTask;
 
 
     class MorseCodeTask extends AsyncTask<MorseCharacter, MorseCharacter, Void> {
 
+        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         protected Void doInBackground(MorseCharacter... queue) {
-            for (MorseCharacter ch : queue) {
-                publishProgress(ch);
+            boolean live = false;
+
+            for (final MorseCharacter ch : queue) {
                 if (isCancelled()) { break; }
-                try {
-                    Thread.sleep(ch.duration + OVERHEAD_ESTIMATE);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                publishProgress(ch);
+                for (long dit : ch.intervals) {
+                    if (isCancelled()) { break; }
+                    if (live) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            try {
+                                cm.setTorchMode(cam, true);
+                                if (v.hasVibrator()) {
+                                    v.vibrate(dit);
+                                }
+                                Thread.sleep(dit);
+                                cm.setTorchMode(cam, false);
+                            } catch (CameraAccessException | InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        try {
+                            Thread.sleep(dit);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    live = !live;
                 }
             }
             return null;
@@ -46,31 +66,32 @@ public class MainActivity extends AppCompatActivity {
         @TargetApi(Build.VERSION_CODES.M)
         @Override
         protected void onProgressUpdate(MorseCharacter... values) {
-            boolean live = false;
             MorseCharacter ch = values[0];
-            disp.setText(disp.getText() + "  " + ch.series);
+            String dispText = disp.getText() + " " + ch.series;
+            disp.setText(dispText);
+        }
 
-            for (long dit : ch.intervals) {
-                if (live) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        try {
-                            cm.setTorchMode(cam, true);
-                            if (v.hasVibrator()) {
-                                v.vibrate(dit);
-                            }
-                            cm.setTorchMode(cam, false);
-                        } catch (CameraAccessException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
+        @Override
+        protected void onCancelled() {
+            postExecCleanup();
+        }
+
+        //@Override
+        protected void onPostExecute(Void aVoid) {
+            postExecCleanup();
+        }
+
+        @TargetApi(Build.VERSION_CODES.M)
+        protected void postExecCleanup() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 try {
-                    Thread.sleep(dit);
-                } catch (InterruptedException e) {
+                    cm.setTorchMode(cam, false);
+                } catch (CameraAccessException e) {
                     e.printStackTrace();
                 }
-                live = !live;
             }
+            btnStart.setText(getString(R.string.btnStart_label));
+            runningTask = null;
         }
     }
 
@@ -86,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
         disp = (TextView) findViewById(R.id.textView);
         v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         cm = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             try {
                 cam = cm.getCameraIdList()[0];
@@ -97,9 +119,17 @@ public class MainActivity extends AppCompatActivity {
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                CharSequence chs = edit.getText();
-                ArrayList<MorseCharacter> queue = encode(chs);
-                new MorseCodeTask().execute(queue.toArray(new MorseCharacter[queue.size()]));
+                if (runningTask == null) {
+                    CharSequence chs = edit.getText();
+                    if (chs != "") {
+                        ArrayList<MorseCharacter> queue = encode(chs);
+                        runningTask = new MorseCodeTask();
+                        runningTask.execute(queue.toArray(new MorseCharacter[queue.size()]));
+                    }
+                    btnStart.setText(getString(R.string.btnStop_label));
+                } else {
+                    runningTask.cancel(true);
+                }
             }
         });
     }
