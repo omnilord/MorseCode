@@ -10,10 +10,10 @@ public final class MorseCodes {
 
     public static final long
             DOT = 200,
-            DASH = DOT * 3,
+            DASH = DOT * 4,
             SEP = DOT / 2,
-            CHAR = SEP * 3,
-            WORD = SEP * 7,
+            CHAR = SEP * 4,
+            WORD = SEP * 8,
             STOP = WORD + CHAR;
 
     static {
