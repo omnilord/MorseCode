@@ -4,13 +4,12 @@ public class MorseCharacter {
     public Character ch;
     public String series;
     public long[] intervals;
-    public long duration;
+    public long duration = 0L;
 
     public MorseCharacter(Character code, long[] intv, long initial) {
         ch = code;
         series = "";
         intervals = new long[(intv.length * 2)];
-        duration = 0L;
 
         int n = 1;
         intervals[0] = initial;
@@ -39,9 +38,8 @@ public class MorseCharacter {
         intervals = ch.intervals;
         intervals[0] = initial;
 
-        duration = 0;
-        for (int i = 0; i < intervals.length; i++) {
-            duration += intervals[i];
+        for (long interval : intervals) {
+            duration += interval;
         }
     }
 }

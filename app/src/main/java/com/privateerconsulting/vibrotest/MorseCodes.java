@@ -1,5 +1,6 @@
 package com.privateerconsulting.vibrotest;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +8,6 @@ import java.util.Map;
 public final class MorseCodes {
 
     public static final Map<Character, MorseCharacter> CODES;
-
     public static final long
             DOT = 200,
             DASH = DOT * 4,
@@ -15,6 +15,7 @@ public final class MorseCodes {
             CHAR = SEP * 4,
             WORD = SEP * 8,
             STOP = WORD + CHAR;
+
 
     static {
         Map<Character, MorseCharacter> map = new HashMap<>();
@@ -61,5 +62,30 @@ public final class MorseCodes {
         map.put('9', new MorseCharacter('9', new long[] {DASH, DASH, DASH, DASH, DOT}));
 
         CODES = Collections.unmodifiableMap(map);
+    }
+
+
+    public static ArrayList<MorseCharacter> encode(CharSequence chs) {
+        ArrayList<MorseCharacter> queue = new ArrayList<>();
+        long preInterval = 0L;
+
+        for (int i = 0; i < chs.length(); i++) {
+            char ch = Character.toUpperCase(chs.charAt(i));
+
+            try {
+                if (MorseCodes.CODES.containsKey(ch)) {
+                    queue.add(new MorseCharacter(MorseCodes.CODES.get(ch), preInterval));
+                    preInterval = MorseCodes.CHAR;
+                } else if (ch == '.') {
+                    preInterval = MorseCodes.STOP;
+                } else {
+                    preInterval = MorseCodes.WORD;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return queue;
     }
 }

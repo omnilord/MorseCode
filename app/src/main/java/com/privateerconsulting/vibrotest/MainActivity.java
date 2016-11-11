@@ -20,50 +20,55 @@ public class MainActivity extends AppCompatActivity {
     Button btnStart;
     TextView edit, disp;
     Vibrator v;
-    CameraManager cm;
+    CameraManager cmgr;
     String cam;
     MorseCodeTask runningTask;
 
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    protected void initSystemServices() {
+        v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            try {
+                cmgr = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+                cam = cmgr.getCameraIdList()[0];
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    protected void toggleTorch(boolean live) {
+        if (cam != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                cmgr.setTorchMode(cam, live);
+            } catch (CameraAccessException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    //
+    // class MorseCodeTask - Handler for multithreading to ensure UI thread does not get
+    //                       over burdened and cause system instability.  All output
+    //                       is accomplished through running instances of this task.
+    //
     class MorseCodeTask extends AsyncTask<MorseCharacter, MorseCharacter, Void> {
 
-        @TargetApi(Build.VERSION_CODES.LOLLIPOP)
         @Override
         protected Void doInBackground(MorseCharacter... queue) {
-            boolean live = false;
-
             for (final MorseCharacter ch : queue) {
                 if (isCancelled()) { break; }
                 publishProgress(ch);
-                for (long dit : ch.intervals) {
-                    if (isCancelled()) { break; }
-                    if (live) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            try {
-                                cm.setTorchMode(cam, true);
-                                if (v.hasVibrator()) {
-                                    v.vibrate(dit);
-                                }
-                                Thread.sleep(dit);
-                                cm.setTorchMode(cam, false);
-                            } catch (CameraAccessException | InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    } else {
-                        try {
-                            Thread.sleep(dit);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    live = !live;
+                if (cam != null || v.hasVibrator()) {
+                    backgroundOperation(ch);
                 }
             }
             return null;
         }
 
-        @TargetApi(Build.VERSION_CODES.M)
         @Override
         protected void onProgressUpdate(MorseCharacter... values) {
             MorseCharacter ch = values[0];
@@ -76,53 +81,61 @@ public class MainActivity extends AppCompatActivity {
             postExecCleanup();
         }
 
-        //@Override
+        @Override
         protected void onPostExecute(Void aVoid) {
             postExecCleanup();
         }
 
-        @TargetApi(Build.VERSION_CODES.M)
-        protected void postExecCleanup() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                try {
-                    cm.setTorchMode(cam, false);
-                } catch (CameraAccessException e) {
-                    e.printStackTrace();
+        protected void backgroundOperation(MorseCharacter ch) {
+            boolean live = false;
+
+            for (long dit : ch.intervals) {
+                if (isCancelled()) { return; }
+                if (live) {
+                    toggleTorch(true);
+                    if (v.hasVibrator()) {
+                        v.vibrate(dit);
+                    }
                 }
+                try {
+                    Thread.sleep(dit);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    if (live) {
+                        toggleTorch(false);
+                    }
+                }
+                live = !live;
             }
+        }
+
+        protected void postExecCleanup() {
+            toggleTorch(false);
             btnStart.setText(getString(R.string.btnStart_label));
             runningTask = null;
         }
     }
 
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initSystemServices();
 
-        btnStart = (Button) findViewById(R.id.btnStart);
         edit = (TextView) findViewById(R.id.editText);
         disp = (TextView) findViewById(R.id.textView);
-        v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        cm = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            try {
-                cam = cm.getCameraIdList()[0];
-            } catch (CameraAccessException e) {
-                e.printStackTrace();
-            }
-        }
+        btnStart = (Button) findViewById(R.id.btnStart);
 
         btnStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (runningTask == null) {
-                    CharSequence chs = edit.getText();
+                    disp.setText("");
+                    CharSequence chs = edit.getText().toString().trim();
                     if (chs != "") {
-                        ArrayList<MorseCharacter> queue = encode(chs);
+                        ArrayList<MorseCharacter> queue = MorseCodes.encode(chs);
                         runningTask = new MorseCodeTask();
                         runningTask.execute(queue.toArray(new MorseCharacter[queue.size()]));
                     }
@@ -132,31 +145,5 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    protected ArrayList<MorseCharacter> encode(CharSequence chs) {
-        ArrayList<MorseCharacter> queue = new ArrayList<>();
-        long preInterval = 0L;
-
-        for (int i = 0; i < chs.length(); i++) {
-            char ch = Character.toUpperCase(chs.charAt(i));
-
-            disp.setText("");
-
-            try {
-                if (MorseCodes.CODES.containsKey(ch)) {
-                    queue.add(new MorseCharacter(MorseCodes.CODES.get(ch), preInterval));
-                    preInterval = MorseCodes.CHAR;
-                } else if (ch == '.') {
-                    preInterval = MorseCodes.STOP;
-                } else {
-                    preInterval = MorseCodes.WORD;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        return queue;
     }
 }
